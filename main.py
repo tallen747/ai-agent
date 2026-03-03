@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 import argparse
+from prompts import system_prompt
+from call_function import call_function
 
 
 def main():
@@ -29,6 +31,11 @@ def main():
     response  = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=messages,
+        config=types.GenerateContentConfig(
+            tools=[available_functions],
+            system_instruction=system_prompt,
+            temperature=0 #He wasn't listening!!!
+            )
     )
 
     if response.usage_metadata != None:
