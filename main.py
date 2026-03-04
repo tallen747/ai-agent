@@ -4,7 +4,7 @@ from google import genai
 from google.genai import types
 import argparse
 from prompts import system_prompt
-from call_function import available_functions
+from call_function import available_functions, call_function
 
 
 def main():
@@ -45,8 +45,19 @@ def main():
             print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
         print(response.text)
         if response.function_calls != None and len(response.function_calls) > 0:
+            function_responses = []
             for function_call in response.function_calls:
                 print(f"Calling function: {function_call.name} ({function_call.args})")
+                function_call_response = call_function(function_call, verbose=args.verbose)
+                if len(function_call_response.parts) == 0:
+                    raise Exception("Function call response has no parts. Unable to retrieve function response content.")
+                if not function_call_response.parts[0].function_response:
+                    raise Exception("Function call response part has no function response. Unable to retrieve function response content.")
+                if not function_call_response.parts[0].function_response.response:
+                    raise Exception("Function call response part function response has no 'response' field. Unable to retrieve function response content.")
+                function_responses.append(function_call_response.parts[0])
+                if args.verbose:
+                    print(f"-> {function_call_response.parts[0].function_response.response}")
     else:
         raise RuntimeError("Response metadata is None. Unable to retrieve token counts.")
 
